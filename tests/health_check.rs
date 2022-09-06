@@ -1,3 +1,4 @@
+use base_proj::startup::run;
 use std::net::TcpListener;
 
 // `tokio::test` is the testing equivalent of `tokio::main`.
@@ -26,7 +27,7 @@ fn spawn_app() -> String {
     // Port 0 tells the OS to give us any available port.
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
     let port = listener.local_addr().unwrap().port();
-    let server = base_proj::run(listener).expect("Failed to bind address");
+    let server = run(listener).expect("Failed to bind address");
     let _ = tokio::spawn(server);
     format!("http://127.0.0.1:{}", port)
 }
