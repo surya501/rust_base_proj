@@ -1,3 +1,5 @@
+use std::net::TcpListener;
+
 // `tokio::test` is the testing equivalent of `tokio::main`.
 // It also spares you from having to specify the `#[test]` attribute.
 //
@@ -6,10 +8,8 @@
 #[tokio::test]
 async fn health_check_works() {
     // Let's first spawn the app first.
-    spawn_app();
-
+    let address = spawn_app();
     // Act
-    let address = "http://127.0.0.1:8000";
     let client = reqwest::Client::new();
     let response = client
         .get(&format!("{}/health_check", &address))
@@ -22,7 +22,11 @@ async fn health_check_works() {
     assert_eq!(Some(0), response.content_length());
 }
 
-fn spawn_app() {
-    let server = base_proj::run().expect("Failed to bind address");
+fn spawn_app() -> String {
+    // Port 0 tells the OS to give us any available port.
+    let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
+    let port = listener.local_addr().unwrap().port();
+    let server = base_proj::run(listener).expect("Failed to bind address");
     let _ = tokio::spawn(server);
+    format!("http://127.0.0.1:{}", port)
 }
