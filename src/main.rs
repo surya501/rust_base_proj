@@ -1,12 +1,19 @@
+use sqlx::PgPool;
 use std::net::TcpListener;
 
-use base_proj::{configuration, startup::run};
+use base_proj::{configuration::get_configuration, startup::run};
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
-    let configuration = configuration::get_configuration().expect("Failed to read configuration.");
+    let configuration = get_configuration().expect("Failed to read configuration.");
     let address = format!("127.0.0.1:{}", configuration.application_port);
     let listener = TcpListener::bind(address).expect("Failed to bind random port");
+
+    let connection_string = configuration.database.connection_string();
+    let connection = PgPool::connect(&connection_string)
+        .await
+        .expect("Failed to connect to Postgres.");
+
     // let's bubble up the error from the run function if the bind fails
-    run(listener)?.await
+    run(listener, connection)?.await
 }
