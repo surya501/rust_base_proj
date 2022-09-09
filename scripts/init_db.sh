@@ -26,9 +26,13 @@ DB_PORT=${POSTGRES_PORT:=5432}
 
 # Kill the existing docker image if it exists
 docker kill newsletter-db || true
-# Launch postgres using Docker
-docker run --rm --name newsletter-db -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASS -e POSTGRES_DB=$DB_NAME -p $DB_PORT:5432 -d postgres postgres -N 1000
-# docker run -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASS -e POSTGRES_DB=$DB_NAME -p $DB_PORT:5432 -d postgres postgres -N 1000
+if [[ -z "$SKIP_DOCKER" ]]; then
+  # Launch postgres using Docker
+  docker run --rm --name newsletter-db -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASS -e POSTGRES_DB=$DB_NAME -p $DB_PORT:5432 -d postgres postgres -N 1000
+  # docker run -e POSTGRES_USER=$DB_USER -e POSTGRES_PASSWORD=$DB_PASS -e POSTGRES_DB=$DB_NAME -p $DB_PORT:5432 -d postgres postgres -N 1000
+  # Wait for the database to start
+  sleep 5
+fi
 
 # keep pinging postgres until it's ready to accept commands
 export PGPASSWORD=$DB_PASS
