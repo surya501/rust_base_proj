@@ -22,6 +22,7 @@ uuid = { version = "1.1.2", features = ["v4"] }
 chrono = "0.4.22"
 env_logger = "0.9.0"
 log = "0.4.17"
+tracing = { version = "0.1.36", features = ["log"] }
 
 [dev-dependencies]
 reqwest = "0.11.11"
