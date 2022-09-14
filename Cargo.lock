@@ -280,7 +280,6 @@ dependencies = [
  "actix-web",
  "chrono",
  "config",
- "log",
  "reqwest",
  "serde",
  "sqlx",
