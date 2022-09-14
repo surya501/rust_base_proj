@@ -1,37 +1,37 @@
 use base_proj::{
     configuration::{get_configuration, DatabaseConfiguration},
     startup::run,
+    telemetry::{create_subscriber, init_subscriber},
 };
+use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 
 // `tokio::test` is the testing equivalent of `tokio::main`.
 // It also spares you from having to specify the `#[test]` attribute.
 //
-// You can inspect what code gets generated using
-// `cargo expand --test health_check` (<- name of the test file)
-#[tokio::test]
-async fn health_check_works() {
-    // Let's first spawn the app first.
-    let app = spawn_app().await;
-    // Act
-    let client = reqwest::Client::new();
-    let response = client
-        .get(&format!("{}/health_check", &app.address))
-        .send()
-        .await
-        .expect("Failed to execute request.");
 
-    // Assert
-    assert!(response.status().is_success());
-    assert_eq!(Some(0), response.content_length());
-}
+// when testing, you can enable or disable the `tracing` subscriber by
+// setting the `TEST_LOG` environment variable. For example:
+// TEST_LOG=true cargo test health_check_works | bunyan
+static TRACING: Lazy<()> = Lazy::new(|| {
+    if std::env::var("TEST_LOG").is_ok() {
+        let subscriber = create_subscriber("test".into(), "debug".into(), std::io::stdout);
+        init_subscriber(subscriber);
+    } else {
+        let subscriber = create_subscriber("test".into(), "debug".into(), std::io::sink);
+        init_subscriber(subscriber);
+    }
+});
+
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
 }
 
 async fn spawn_app() -> TestApp {
+    Lazy::force(&TRACING);
+
     // Port 0 tells the OS to give us any available port.
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
     let port = listener.local_addr().unwrap().port();
@@ -132,4 +132,23 @@ async fn subscibe_returns_a_400_when_data_is_missing() {
             error_message
         );
     }
+}
+
+// You can inspect what code gets generated using
+// `cargo expand --test health_check` (<- name of the test file)
+#[tokio::test]
+async fn health_check_works() {
+    // Let's first spawn the app first.
+    let app = spawn_app().await;
+    // Act
+    let client = reqwest::Client::new();
+    let response = client
+        .get(&format!("{}/health_check", &app.address))
+        .send()
+        .await
+        .expect("Failed to execute request.");
+
+    // Assert
+    assert!(response.status().is_success());
+    assert_eq!(Some(0), response.content_length());
 }
