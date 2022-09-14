@@ -11,21 +11,25 @@ pub struct FormData {
 }
 
 // subscribe handler
+#[tracing::instrument(
+    name = "Subscribe to newsletter",
+    skip(form, pool),
+    fields(
+        request_id = %Uuid::new_v4(),
+        email = %form.email,
+        name = %form.name,
+    )
+)]
 pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> HttpResponse {
-    let uuid = Uuid::new_v4();
+    // let query_span = tracing::info_span!("inserting_subscriber in the database");
+    match insert_subscriber(&pool, &form).await {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(_) => HttpResponse::InternalServerError().finish(),
+    }
+}
 
-    let request_span = tracing::info_span!("subscribe", request_id = %uuid, email = %form.email, name = %form.name);
-
-    let _req_span_entered = request_span.enter();
-
-    let query_span = tracing::info_span!("inserting_subscriber in the database");
-    tracing::info!(
-        "requestId: {} - New subsciber addition: {:?} <{}>",
-        uuid,
-        form.name,
-        form.email
-    );
-    match sqlx::query!(
+pub async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sqlx::Error> {
+    sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at)
         VALUES ($1, $2, $3, $4)
@@ -35,22 +39,13 @@ pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Ht
         form.name,
         Utc::now()
     )
-    .execute(pool.get_ref())
-    .instrument(query_span)
+    .execute(pool)
     .await
-    {
-        Ok(_) => {
-            tracing::info!(
-                "requestId: {} - New subscription: {} <{}>",
-                uuid,
-                &form.name,
-                &form.email
-            );
-            HttpResponse::Ok().finish()
-        }
-        Err(e) => {
-            tracing::error!("requestId: {} - Failed to execute query: {:?}", uuid, e);
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+    .map_err(|e| {
+        tracing::error!("Failed to execute query: {:?}", e);
+        e
+        // Using the `?` operator to return early
+        // if the function failed, returning a sqlx::Error;
+    })?;
+    Ok(())
 }
