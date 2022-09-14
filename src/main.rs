@@ -1,29 +1,7 @@
+use base_proj::telemetry::{create_subscriber, init_subscriber};
+use base_proj::{configuration::get_configuration, startup::run};
 use sqlx::PgPool;
 use std::net::TcpListener;
-use tracing::subscriber::{self, set_global_default};
-use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
-use tracing_log::LogTracer;
-use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
-
-use base_proj::{configuration::get_configuration, startup::run};
-
-// Notice the impl keyword. Understand this usage better.
-fn init_subscriber(subscriber: impl tracing::Subscriber + Send + Sync) {
-    // First capture all the logs to the tracing.
-    LogTracer::init().expect("Failed to set logger.");
-    set_global_default(subscriber).expect("Failed to set subscriber");
-}
-
-fn create_subscriber(name: String, env_filter: String) -> impl tracing::Subscriber + Send + Sync {
-    // Check for RUST_LOG env variable and if not set use env_filter
-    let env_filter =
-        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(env_filter));
-
-    Registry::default()
-        .with(env_filter)
-        .with(JsonStorageLayer)
-        .with(BunyanFormattingLayer::new(name, std::io::stdout))
-}
 
 #[tokio::main]
 async fn main() -> std::io::Result<()> {
