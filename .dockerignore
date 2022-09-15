@@ -1,0 +1,9 @@
+.env
+target/
+tests/
+migrations/
+scripts/
+.github/
+.gitignore
+README.md
+Dockerfile
