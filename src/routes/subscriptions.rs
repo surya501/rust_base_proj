@@ -14,7 +14,6 @@ pub struct FormData {
     name = "Subscribe to newsletter",
     skip(form, pool),
     fields(
-        request_id = %Uuid::new_v4(),
         email = %form.email,
         name = %form.name,
     )
@@ -27,6 +26,7 @@ pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Ht
     }
 }
 
+#[tracing::instrument(name = "Inserting a new subscriber in the db", skip(form, pool))]
 pub async fn insert_subscriber(pool: &PgPool, form: &FormData) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
