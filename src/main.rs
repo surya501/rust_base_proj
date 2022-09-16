@@ -1,6 +1,5 @@
 use base_proj::telemetry::{create_subscriber, init_subscriber};
 use base_proj::{configuration::get_configuration, startup::run};
-use secrecy::ExposeSecret;
 use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
 
@@ -17,11 +16,9 @@ async fn main() -> std::io::Result<()> {
     );
     let listener = TcpListener::bind(address).expect("Failed to bind random port");
 
-    let connection_string = configuration.database.connection_string();
     let connection = PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
-        .connect_lazy(connection_string.expose_secret())
-        .expect("Failed to connect to Postgres.");
+        .connect_lazy_with(configuration.database.with_db());
 
     // let's bubble up the error from the run function if the bind fails
     run(listener, connection)?.await
