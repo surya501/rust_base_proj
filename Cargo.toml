@@ -36,6 +36,9 @@ unicode-segmentation = "1.10.0"
 validator = "0.16.0"
 
 [dev-dependencies]
-fake = "2.5.0"
+# Cant use faker 2.4 or higher because of conflict with rand 0.8 used in quickcheck
+fake = "~2.3.0"
+quickcheck = "0.9.2"
+quickcheck_macros = "0.9.1"
 reqwest = "0.11.11"
 tokio-test = "0.4.2"
