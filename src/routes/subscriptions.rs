@@ -11,10 +11,22 @@ pub struct FormData {
     email: String,
 }
 
-pub fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
-    let name = SubscriberName::parse(form.name)?;
-    let email = SubscriberEmail::parse(form.email)?;
-    Ok(NewSubscriber { name, email })
+// Implementning TryFrom gives us TryInto for free
+
+// pub trait TryFrom<T>: Sized {
+//     /// The type returned in the event of a conversion error.
+//     type Error;
+//     /// Performs the conversion.
+//     fn try_from(value: T) -> Result<Self, Self::Error>;
+// }
+
+impl TryFrom<FormData> for NewSubscriber {
+    type Error = String;
+    fn try_from(value: FormData) -> Result<Self, Self::Error> {
+        let name = SubscriberName::parse(value.name)?;
+        let email = SubscriberEmail::parse(value.email)?;
+        Ok(NewSubscriber { name, email })
+    }
 }
 
 // subscribe handler
@@ -29,7 +41,7 @@ pub fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
 pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> HttpResponse {
     // `web::Form` is a wrapper around `FormData`
     // `form.0` gives us access to the underlying `FormData`
-    let new_subscriber = match parse_subscriber(form.0) {
+    let new_subscriber = match form.0.try_into() {
         Ok(new_subscriber) => new_subscriber,
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
