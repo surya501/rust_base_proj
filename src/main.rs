@@ -1,3 +1,4 @@
+use base_proj::email_client::EmailClient;
 use base_proj::telemetry::{create_subscriber, init_subscriber};
 use base_proj::{configuration::get_configuration, startup::run};
 use sqlx::postgres::PgPoolOptions;
@@ -20,6 +21,16 @@ async fn main() -> std::io::Result<()> {
         .acquire_timeout(std::time::Duration::from_secs(2))
         .connect_lazy_with(configuration.database.with_db());
 
+    let sender_email = configuration
+        .email_client
+        .sender()
+        .expect("Invalid sender email address.");
+    let email_client = EmailClient::new(
+        sender_email,
+        configuration.email_client.base_url,
+        configuration.email_client.authorization_token,
+    );
+
     // let's bubble up the error from the run function if the bind fails
-    run(listener, connection)?.await
+    run(listener, connection, email_client)?.await
 }

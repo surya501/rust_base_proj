@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 actix-web = "4.1.0"
 serde = { version = "1.0.144", features = ["derive"] }
-tokio = { version = "1.21.0", features = ["macros", "rt-multi-thread"] }
+tokio = { version = "1.21.0", features = ["macros", "rt-multi-thread", "rt"] }
 sqlx = { version = "0.6.1", features = [
     "runtime-actix-rustls",
     "macros",
@@ -34,6 +34,11 @@ tracing-actix-web = "0.6.0"
 serde-aux = "4.0.0"
 unicode-segmentation = "1.10.0"
 validator = "0.16.0"
+# We need the `json` feature flag to serialize/deserialize JSON payloadsma
+reqwest = { version = "0.11", default-features = false, features = [
+    "json",
+    "rustls-tls",
+] }
 
 [dev-dependencies]
 # Cant use faker 2.4 or higher because of conflict with rand 0.8 used in quickcheck
@@ -42,3 +47,4 @@ quickcheck = "0.9.2"
 quickcheck_macros = "0.9.1"
 reqwest = "0.11.11"
 tokio-test = "0.4.2"
+wiremock = "0.5"

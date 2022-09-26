@@ -1,5 +1,6 @@
 use base_proj::{
     configuration::{get_configuration, DatabaseConfiguration},
+    email_client::EmailClient,
     startup::run,
     telemetry::{create_subscriber, init_subscriber},
 };
@@ -46,7 +47,19 @@ async fn spawn_app() -> TestApp {
     //     .await
     //     .expect("Failed to connect to Postgres.");
 
-    let server = run(listener, connection_pool.clone()).expect("Failed to bind address");
+    // Build a new email client
+    let sender_email = configuration
+        .email_client
+        .sender()
+        .expect("Invalid sender email address.");
+    let email_client = EmailClient::new(
+        sender_email,
+        configuration.email_client.base_url,
+        configuration.email_client.authorization_token,
+    );
+
+    let server =
+        run(listener, connection_pool.clone(), email_client).expect("Failed to bind address");
 
     let _ = tokio::spawn(server);
     TestApp {

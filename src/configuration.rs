@@ -4,11 +4,27 @@ use sqlx::postgres::{PgConnectOptions, PgSslMode};
 use sqlx::ConnectOptions;
 use std::convert::{TryFrom, TryInto};
 
+use crate::domain::SubscriberEmail;
+
 #[derive(serde::Deserialize)]
 pub struct Settings {
     pub database: DatabaseConfiguration,
     pub application: AppSettings,
+    pub email_client: EmailClientSettings,
 }
+#[derive(serde::Deserialize)]
+pub struct EmailClientSettings {
+    pub base_url: String,
+    pub sender_email: String,
+    pub authorization_token: Secret<String>,
+}
+
+impl EmailClientSettings {
+    pub fn sender(&self) -> Result<SubscriberEmail, String> {
+        SubscriberEmail::parse(self.sender_email.clone())
+    }
+}
+
 #[derive(serde::Deserialize)]
 pub struct AppSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
