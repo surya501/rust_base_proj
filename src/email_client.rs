@@ -89,6 +89,8 @@ mod tests {
 
     use crate::domain::SubscriberEmail;
 
+    use super::EmailClient;
+
     struct SendEmailBodyMatcher;
     impl wiremock::Match for SendEmailBodyMatcher {
         fn matches(&self, request: &Request) -> bool {
@@ -110,12 +112,27 @@ mod tests {
         }
     }
 
+    // Helper functions for tests
+    fn random_email_data() -> (SubscriberEmail, String, String) {
+        let subscriber_email = email_data();
+        let subject: String = Sentence(1..2).fake();
+        let content: String = Paragraph(1..10).fake();
+        (subscriber_email, subject, content)
+    }
+
+    fn email_data() -> SubscriberEmail {
+        SubscriberEmail::parse(SafeEmail().fake()).unwrap()
+    }
+
+    fn email_client(base_url: String) -> EmailClient {
+        EmailClient::new(email_data(), base_url, Secret::new(Faker.fake()))
+    }
+
     #[tokio::test]
     async fn send_email_sends_a_request_to_the_base_url() {
         let mock_server = MockServer::start().await;
-        let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let email_client =
-            super::EmailClient::new(sender, mock_server.uri(), Secret::new(Faker.fake()));
+        let email_client = email_client(mock_server.uri());
+        let (subscriber_email, subject, content) = random_email_data();
 
         Mock::given(header_exists("X-Postmark-Server-Token"))
             .and(header("Content-Type", "application/json"))
@@ -128,9 +145,6 @@ mod tests {
             .mount(&mock_server)
             .await;
 
-        let subscriber_email = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let subject: String = Sentence(1..2).fake();
-        let content: String = Paragraph(1..10).fake();
         // Act
         let _ = email_client
             .send_email(subscriber_email, &subject, &content, &content)
@@ -140,12 +154,8 @@ mod tests {
     #[tokio::test]
     async fn send_email_succeeds_if_the_server_returns_200() {
         let mock_server = MockServer::start().await;
-        let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let email_client =
-            super::EmailClient::new(sender, mock_server.uri(), Secret::new(Faker.fake()));
-        let subscriber_email = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let subject: String = Sentence(1..2).fake();
-        let content: String = Paragraph(1..10).fake();
+        let email_client = email_client(mock_server.uri());
+        let (subscriber_email, subject, content) = random_email_data();
 
         Mock::given(any())
             .respond_with(ResponseTemplate::new(200))
@@ -164,12 +174,8 @@ mod tests {
     #[tokio::test]
     async fn send_email_fails_if_the_server_returns_500() {
         let mock_server = MockServer::start().await;
-        let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let email_client =
-            super::EmailClient::new(sender, mock_server.uri(), Secret::new(Faker.fake()));
-        let subscriber_email = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let subject: String = Sentence(1..2).fake();
-        let content: String = Paragraph(1..10).fake();
+        let email_client = email_client(mock_server.uri());
+        let (subscriber_email, subject, content) = random_email_data();
 
         Mock::given(any())
             .respond_with(ResponseTemplate::new(500))
@@ -189,12 +195,8 @@ mod tests {
     #[tokio::test]
     async fn send_email_fails_if_the_server_takes_too_long() {
         let mock_server = MockServer::start().await;
-        let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let email_client =
-            super::EmailClient::new(sender, mock_server.uri(), Secret::new(Faker.fake()));
-        let subscriber_email = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let subject: String = Sentence(1..2).fake();
-        let content: String = Paragraph(1..10).fake();
+        let email_client = email_client(mock_server.uri());
+        let (subscriber_email, subject, content) = random_email_data();
 
         let response = ResponseTemplate::new(200)
             // 3 minutes!
