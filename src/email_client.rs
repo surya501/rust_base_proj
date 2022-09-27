@@ -26,11 +26,9 @@ impl EmailClient {
         sender: SubscriberEmail,
         base_url: String, // We don't want to log this by accident
         authorization_token: Secret<String>,
+        timeout: std::time::Duration,
     ) -> Self {
-        let http_client = Client::builder()
-            .timeout(std::time::Duration::from_secs(10))
-            .build()
-            .unwrap();
+        let http_client = Client::builder().timeout(timeout).build().unwrap();
         Self {
             sender,
             base_url,
@@ -125,7 +123,9 @@ mod tests {
     }
 
     fn email_client(base_url: String) -> EmailClient {
-        EmailClient::new(email_data(), base_url, Secret::new(Faker.fake()))
+        // Let's fail fast in tests; Very important for development loop speed
+        let timeout = std::time::Duration::from_millis(200);
+        EmailClient::new(email_data(), base_url, Secret::new(Faker.fake()), timeout)
     }
 
     #[tokio::test]

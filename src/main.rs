@@ -25,10 +25,12 @@ async fn main() -> std::io::Result<()> {
         .email_client
         .sender()
         .expect("Invalid sender email address.");
+    let timeout = configuration.email_client.timeout();
     let email_client = EmailClient::new(
         sender_email,
         configuration.email_client.base_url,
         configuration.email_client.authorization_token,
+        timeout,
     );
 
     // let's bubble up the error from the run function if the bind fails
