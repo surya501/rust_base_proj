@@ -5,11 +5,10 @@ use serde::Serialize;
 use crate::domain::SubscriberEmail;
 
 pub struct EmailClient {
-    sender: SubscriberEmail,
-    base_url: String,
     http_client: Client,
-    // We don't want to log this by accident
-    authorization_token: Secret<String>,
+    base_url: String,
+    sender: SubscriberEmail,
+    authorization_token: Secret<String>, // We don't want to log this by accident
 }
 // Structure desired by the postman service.
 #[derive(Serialize)]
@@ -38,7 +37,7 @@ impl EmailClient {
     }
 
     pub async fn send_email(
-        self,
+        &self,
         recipient: SubscriberEmail,
         subject: &str,
         text_content: &str,
