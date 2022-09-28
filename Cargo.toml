@@ -39,6 +39,8 @@ reqwest = { version = "0.11", default-features = false, features = [
     "json",
     "rustls-tls",
 ] }
+# We need the `std_rng` to get access to the PRNG we want
+rand = { version = "0.8", features = ["std_rng"] }
 
 [dev-dependencies]
 # Cant use faker 2.4 or higher because of conflict with rand 0.8 used in quickcheck
