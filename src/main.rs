@@ -34,5 +34,11 @@ async fn main() -> std::io::Result<()> {
     );
 
     // let's bubble up the error from the run function if the bind fails
-    run(listener, connection, email_client)?.await
+    run(
+        listener,
+        connection,
+        email_client,
+        configuration.application.base_url,
+    )?
+    .await
 }

@@ -30,6 +30,7 @@ pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
     pub email_server: MockServer,
+    pub port: u16,
 }
 
 impl TestApp {
@@ -78,14 +79,22 @@ pub async fn spawn_app() -> TestApp {
         timeout,
     );
 
-    let server =
-        run(listener, connection_pool.clone(), email_client).expect("Failed to bind address");
+    let server = run(
+        listener,
+        connection_pool.clone(),
+        email_client,
+        configuration.application.base_url,
+    )
+    .expect("Failed to bind address");
+
+    // let application_port = application.port();
 
     let _ = tokio::spawn(server);
     TestApp {
         address,
         db_pool: connection_pool,
         email_server,
+        port,
     }
 }
 

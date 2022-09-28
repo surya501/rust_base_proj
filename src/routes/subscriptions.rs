@@ -45,6 +45,7 @@ pub async fn subscribe(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
+    base_url: web::Data<String>,
 ) -> HttpResponse {
     // `web::Form` is a wrapper around `FormData`
     // `form.0` gives us access to the underlying `FormData`
@@ -60,7 +61,7 @@ pub async fn subscribe(
 
     // Send a (useless) email to the new subscriber.
     // We are ignoring email delivery errors for now.
-    if send_confirmation_email(&email_client, new_subscriber)
+    if send_confirmation_email(&email_client, new_subscriber, &base_url)
         .await
         .is_err()
     {
@@ -76,8 +77,12 @@ pub async fn subscribe(
 pub async fn send_confirmation_email(
     email_client: &EmailClient,
     new_subscriber: NewSubscriber,
+    base_url: &str,
 ) -> Result<(), reqwest::Error> {
-    let confirmation_link = "https://my-api.com/subscriptions/confirm";
+    let confirmation_link = format!(
+        "{}/subscriptions/confirm?subscription_token=mytoken",
+        base_url
+    );
     let plain_body = format!(
         "Welcome to our newsletter!\nVisit {} to confirm your subscription.",
         confirmation_link
