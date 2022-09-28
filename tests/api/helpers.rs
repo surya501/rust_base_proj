@@ -7,6 +7,7 @@ use base_proj::{
 use once_cell::sync::Lazy;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
+use wiremock::MockServer;
 
 // `tokio::test` is the testing equivalent of `tokio::main`.
 // It also spares you from having to specify the `#[test]` attribute.
@@ -28,6 +29,7 @@ static TRACING: Lazy<()> = Lazy::new(|| {
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
+    pub email_server: MockServer,
 }
 
 impl TestApp {
@@ -50,8 +52,12 @@ pub async fn spawn_app() -> TestApp {
     let port = listener.local_addr().unwrap().port();
     let address = format!("http://127.0.0.1:{}", port);
 
+    // Launch a mock server to stand in for Postmark's API
+    let email_server = MockServer::start().await;
+
     let mut configuration = get_configuration().expect("Failed to read configuration.");
     configuration.database.database_name = uuid::Uuid::new_v4().to_string();
+    configuration.email_client.base_url = email_server.uri();
     let connection_pool = configure_database(&configuration.database).await;
 
     // let connection_string = configuration.database.connection_string();
@@ -79,6 +85,7 @@ pub async fn spawn_app() -> TestApp {
     TestApp {
         address,
         db_pool: connection_pool,
+        email_server,
     }
 }
 
