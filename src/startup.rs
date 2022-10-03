@@ -6,7 +6,7 @@ use std::net::TcpListener;
 use tracing_actix_web::TracingLogger;
 
 use crate::email_client::EmailClient;
-use crate::routes::{confirm, health, subscribe};
+use crate::routes::{confirm, health, publish_newsletter, subscribe};
 
 pub fn run(
     listener: TcpListener,
@@ -24,6 +24,7 @@ pub fn run(
             .route("/health_check", web::get().to(health))
             .route("/subscriptions", web::post().to(subscribe))
             .route("/subscriptions/confirm", web::get().to(confirm))
+            .route("/newsletters", web::post().to(publish_newsletter))
             .app_data(db_pool.clone())
             .app_data(email_client.clone())
             .app_data(base_url.clone())
