@@ -326,6 +326,7 @@ name = "base_proj"
 version = "0.1.0"
 dependencies = [
  "actix-web",
+ "anyhow",
  "chrono",
  "config",
  "fake",
