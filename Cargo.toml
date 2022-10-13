@@ -44,6 +44,8 @@ rand = { version = "0.8", features = ["std_rng"] }
 thiserror = "1"
 anyhow = "1"
 base64 = "0.13.0"
+argon2 = { version = "0.4", features = ["std"] }
+
 
 [dev-dependencies]
 # Cant use faker 2.4 or higher because of conflict with rand 0.8 used in quickcheck
