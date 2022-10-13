@@ -1,4 +1,4 @@
-use reqwest::Client;
+use reqwest::{Client, Url};
 use secrecy::{ExposeSecret, Secret};
 use serde::Serialize;
 
@@ -6,7 +6,7 @@ use crate::domain::SubscriberEmail;
 
 pub struct EmailClient {
     http_client: Client,
-    base_url: String,
+    base_url: Url,
     sender: SubscriberEmail,
     authorization_token: Secret<String>, // We don't want to log this by accident
 }
@@ -23,14 +23,14 @@ struct SendEmailRequest<'a> {
 impl EmailClient {
     pub fn new(
         sender: SubscriberEmail,
-        base_url: String, // We don't want to log this by accident
+        base_url: String,
         authorization_token: Secret<String>,
         timeout: std::time::Duration,
     ) -> Self {
         let http_client = Client::builder().timeout(timeout).build().unwrap();
         Self {
             sender,
-            base_url,
+            base_url: Url::parse(&base_url).unwrap(),
             http_client,
             authorization_token,
         }
@@ -43,10 +43,7 @@ impl EmailClient {
         text_content: &str,
         html_content: &str,
     ) -> Result<(), reqwest::Error> {
-        // You can do better using `reqwest::Url::join` if you change
-        // `base_url`'s type from `String` to `reqwest::Url`.
-        // I'll leave it as an exercise for the reader!
-        let url = format!("{}/email", self.base_url);
+        let url = self.base_url.join("/email").unwrap();
         let request_body = SendEmailRequest {
             from: self.sender.as_ref(),
             to: recipient.as_ref(),
@@ -55,7 +52,7 @@ impl EmailClient {
             text_body: text_content,
         };
         self.http_client
-            .post(&url)
+            .post(url)
             .header(
                 "X-Postmark-Server-Token",
                 self.authorization_token.expose_secret(),
