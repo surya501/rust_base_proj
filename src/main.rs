@@ -28,7 +28,7 @@ async fn main() -> std::io::Result<()> {
     let timeout = configuration.email_client.timeout();
     let email_client = EmailClient::new(
         sender_email,
-        configuration.email_client.base_url,
+        &configuration.email_client.base_url,
         configuration.email_client.authorization_token,
         timeout,
     );

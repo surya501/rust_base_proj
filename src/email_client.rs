@@ -23,7 +23,7 @@ struct SendEmailRequest<'a> {
 impl EmailClient {
     pub fn new(
         sender: SubscriberEmail,
-        base_url: String,
+        base_url: &str,
         authorization_token: Secret<String>,
         timeout: std::time::Duration,
     ) -> Self {
