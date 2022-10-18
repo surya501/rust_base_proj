@@ -56,8 +56,8 @@ pub enum Environment {
 impl Environment {
     pub fn as_str(&self) -> &'static str {
         match self {
-            Environment::Local => "local",
-            Environment::Production => "production",
+            Self::Local => "local",
+            Self::Production => "production",
         }
     }
 }
@@ -67,8 +67,8 @@ impl TryFrom<String> for Environment {
 
     fn try_from(value: String) -> Result<Self, Self::Error> {
         match value.as_str() {
-            "local" => Ok(Environment::Local),
-            "production" => Ok(Environment::Production),
+            "local" => Ok(Self::Local),
+            "production" => Ok(Self::Production),
             _ => Err(format!("{} is not a valid environment", value)),
         }
     }

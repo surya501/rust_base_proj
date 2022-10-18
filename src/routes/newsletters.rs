@@ -23,10 +23,10 @@ pub enum PublishError {
 impl ResponseError for PublishError {
     fn error_response(&self) -> HttpResponse {
         match self {
-            PublishError::UnexpectedError(_) => {
+            Self::UnexpectedError(_) => {
                 HttpResponse::new(StatusCode::INTERNAL_SERVER_ERROR)
             }
-            PublishError::AuthError(_) => {
+            Self::AuthError(_) => {
                 let mut response = HttpResponse::new(StatusCode::UNAUTHORIZED);
                 let header_value = HeaderValue::from_str(r#"Basic realm="publish""#).unwrap();
                 response
